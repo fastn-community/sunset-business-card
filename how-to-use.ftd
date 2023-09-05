@@ -1,9 +1,9 @@
 -- import: fastn-community.github.io/business-card/docs
--- import: __user_name__.github.io/__repo_name__
+-- import: fastn-community.github.io/sunset-business-card
 
 -- docs.detail-doc:
-package-name: __repo_name__
-package-full-name:  __user_name__.github.io/__repo_name__
-github: https://github.com/__user_name__/__repo_name__
-category: __user_name__.github.io/__repo_name__
-;; license-url: https://github.com/__user_name__/__repo_name__/blob/main/LICENSE
+package-name: sunset-business-card
+package-full-name:  fastn-community.github.io/sunset-business-card
+github: https://github.com/fastn-community/sunset-business-card
+category: fastn-community.github.io/sunset-business-card
+;; license-url: https://github.com/fastn-community/sunset-business-card/blob/main/LICENSE
