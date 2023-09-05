@@ -3,8 +3,6 @@
 -- component front:
 caption name:
 string title:
-string company-name:
-ftd.image-src logo:
 optional string contact-1:
 optional string contact-2:
 optional string email:
@@ -12,8 +10,8 @@ optional string website:
 optional string address:
 
 -- ftd.row:
-width.fixed.px: 700
-height.fixed.px: 350
+width.fixed.px: fill-container
+height.fixed.px: fill-container
 background.solid: #FFFFFF
 
 -- ftd.column:
@@ -53,8 +51,7 @@ if: { front.contact-2 != NULL }
 if: { front.address != NULL }
 
 -- ftd.text: $front.website
-if: { front.address != NULL }
-text-align: center
+if: { front.website != NULL }
 
 -- end: ftd.column
 
