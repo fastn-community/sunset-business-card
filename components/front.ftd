@@ -1,0 +1,70 @@
+
+
+-- component front:
+caption name:
+string title:
+string company-name:
+ftd.image-src logo:
+optional string contact-1:
+optional string contact-2:
+optional string email:
+optional string website:
+optional string address:
+
+-- ftd.row:
+width.fixed.px: 700
+height.fixed.px: 350
+background.solid: #FFFFFF
+
+-- ftd.column:
+width.fixed.percent: 40
+height: fill-container
+align-content: center
+spacing.fixed.px: 16
+background.solid: #EF8435
+color: #FFFFFF
+
+-- ftd.text: $front.name
+role: $inherited.types.heading-medium
+
+-- ftd.text: $front.title
+role: $inherited.types.copy-regular
+
+-- end: ftd.column
+
+-- ftd.column:
+width.fixed.percent: 60
+height: fill-container
+align-content: center
+padding-horizontal.px: 24
+color: #5D6481
+role: $inherited.types.fine-print
+
+-- ftd.column:
+width.fixed.percent: 80
+align-content: left
+spacing.fixed.px: 12
+
+-- ftd.text: $front.email
+if: { front.email != NULL }
+
+-- ftd.text: $front.contact-1
+if: { front.contact-1 != NULL }
+
+-- ftd.text: $front.contact-2
+if: { front.contact-2 != NULL }
+
+-- ftd.text: $front.address
+if: { front.address != NULL }
+
+-- ftd.text: $front.website
+if: { front.address != NULL }
+text-align: center
+
+-- end: ftd.column
+
+-- end: ftd.column
+
+-- end: ftd.row
+
+-- end: front
