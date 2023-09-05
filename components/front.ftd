@@ -34,16 +34,11 @@ role: $inherited.types.copy-regular
 
 -- ftd.column:
 width.fixed.percent: 60
-height: fill-container
-align-content: center
+align-self: center
 padding-horizontal.px: 24
 color: #5D6481
-role: $inherited.types.fine-print
-
--- ftd.column:
-width.fixed.percent: 80
-align-content: left
-spacing.fixed.px: 12
+spacing.fixed.px: 8
+role: $inherited.types.copy-small
 
 -- ftd.text: $front.email
 if: { front.email != NULL }
@@ -63,7 +58,6 @@ text-align: center
 
 -- end: ftd.column
 
--- end: ftd.column
 
 -- end: ftd.row
 
