@@ -43,7 +43,7 @@ optional string company-slogan:
 -- lib.display-card.front:
 
 -- front.front: $card.name
-title: $card.titlegit
+title: $card.title
 contact-1: $card.contact-1
 contact-2: $card.contact-2
 email: $card.email

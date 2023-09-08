@@ -8,8 +8,8 @@ ftd.image-src logo:
 optional string company-slogan:
 
 -- ftd.column:
-width.fixed.px: fill-container
-height.fixed.px: fill-containergit 
+width: fill-container
+height: fill-container
 background.solid: #EF8435
 spacing: space-around
 align-content: center
