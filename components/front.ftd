@@ -10,8 +10,8 @@ optional string website:
 optional string address:
 
 -- ftd.row:
-width.fixed.px: fill-container
-height.fixed.px: fill-container
+width: fill-container
+height: fill-container
 background.solid: #FFFFFF
 
 -- ftd.column:
