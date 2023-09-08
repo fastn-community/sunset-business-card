@@ -678,7 +678,10 @@ fastn_dom.ElementKind = {
     // Note: This is called internally, it gives `code` as tagName. This is used
     // along with the Code: 15.
     CodeChild: 16,
-    WebComponent: (webcomponent, arguments) => { return [17, {webcomponent, arguments}]; }
+    // Note: 'arguments' cant be used as function parameter name bcoz it has
+    // internal usage in js functions.
+    WebComponent: (webcomponent, args) => { return [17, [webcomponent, args]]; },
+    Video: 18,
 };
 
 fastn_dom.PropertyKind = {
@@ -794,6 +797,12 @@ fastn_dom.PropertyKind = {
     InputMaxLength: 107,
     Favicon: 108,
     Fit: 109,
+    VideoSrc: 110,
+    Autoplay: 111,
+    Poster: 112,
+    LoopVideo: 113,
+    Controls: 114,
+    Muted: 115,
 };
 
 
@@ -1269,6 +1278,8 @@ class Node2 {
     }
     // for attaching inline attributes
     attachAttribute(property, value) {
+        // If the value is null, undefined, or false, the attribute will be removed.
+        // For example, if attributes like checked, muted, or autoplay have been assigned a "false" value.
         if (fastn_utils.isNull(value)) {
             this.#node.removeAttribute(property);
             return;
@@ -1681,22 +1692,40 @@ class Node2 {
             this.attachCss("justify-content", value);
             return;
         }
-        if (node_kind === fastn_dom.ElementKind.Row) {
+        if (node_kind === fastn_dom.ElementKind.Column) {
             switch (value) {
                 case 'top-left':
-                case 'left':
-                case 'bottom-left':
                     this.attachCss("justify-content", "start");
                     this.attachCss("align-items", "start");
                     break;
                 case 'top-center':
-                case 'center':
-                case 'bottom-center':
-                    this.attachCss("justify-content", "center");
+                    this.attachCss("justify-content", "start");
                     this.attachCss("align-items", "center");
                     break;
                 case 'top-right':
+                    this.attachCss("justify-content", "start");
+                    this.attachCss("align-items", "end");
+                    break;
+                case 'left':
+                    this.attachCss("justify-content", "center");
+                    this.attachCss("align-items", "start");
+                    break;
+                case 'center':
+                    this.attachCss("justify-content", "center");
+                    this.attachCss("align-items", "center");
+                    break;
                 case 'right':
+                    this.attachCss("justify-content", "center");
+                    this.attachCss("align-items", "end");
+                    break;
+                case 'bottom-left':
+                    this.attachCss("justify-content", "end");
+                    this.attachCss("align-items", "left");
+                    break;
+                case 'bottom-center':
+                    this.attachCss("justify-content", "end");
+                    this.attachCss("align-items", "center");
+                    break;
                 case 'bottom-right':
                     this.attachCss("justify-content", "end");
                     this.attachCss("align-items", "end");
@@ -1704,22 +1733,40 @@ class Node2 {
             }
         }
 
-        if (node_kind === fastn_dom.ElementKind.Column) {
+        if (node_kind === fastn_dom.ElementKind.Row) {
             switch (value) {
                 case 'top-left':
-                case 'top-center':
-                case 'top-right':
                     this.attachCss("justify-content", "start");
                     this.attachCss("align-items", "start");
                     break;
+                case 'top-center':
+                    this.attachCss("justify-content", "center");
+                    this.attachCss("align-items", "start");
+                    break;
+                case 'top-right':
+                    this.attachCss("justify-content", "end");
+                    this.attachCss("align-items", "start");
+                    break;
                 case 'left':
+                    this.attachCss("justify-content", "start");
+                    this.attachCss("align-items", "center");
+                    break;
                 case 'center':
-                case 'right':
                     this.attachCss("justify-content", "center");
                     this.attachCss("align-items", "center");
                     break;
+                case 'right':
+                    this.attachCss("justify-content", "right");
+                    this.attachCss("align-items", "center");
+                    break;
                 case 'bottom-left':
+                    this.attachCss("justify-content", "start");
+                    this.attachCss("align-items", "end");
+                    break;
                 case 'bottom-center':
+                    this.attachCss("justify-content", "start");
+                    this.attachCss("align-items", "end");
+                    break;
                 case 'bottom-right':
                     this.attachCss("justify-content", "end");
                     this.attachCss("align-items", "end");
@@ -2089,12 +2136,72 @@ class Node2 {
                 }
                 const is_dark_mode = ftd.dark_mode.get();
                 const src = staticValue.get(is_dark_mode ? 'dark' : 'light');
-
-                this.attachAttribute("src", fastn_utils.getStaticValue(src));
+                if (!ssr) {
+                    let image_node = this.#node;
+                    if( image_node.nodeName.toLowerCase() === "a" ) {
+                        let childNodes = image_node.childNodes;
+                        childNodes.forEach(function(child) {
+                            if (child.nodeName.toLowerCase() === "img")
+                                image_node = child;
+                        });
+                    }
+                    image_node.setAttribute("src", fastn_utils.getStaticValue(src));
+                }
+                else {
+                    this.attachAttribute("src", fastn_utils.getStaticValue(src));
+                }
             }).addNodeProperty(this, null, inherited));
             this.#mutables.push(ftd.dark_mode);
         } else if (kind === fastn_dom.PropertyKind.Alt) {
             this.attachAttribute("alt", staticValue);
+        } else if (kind === fastn_dom.PropertyKind.VideoSrc) {
+            ftd.dark_mode.addClosure(fastn.closure(() => {
+                if (fastn_utils.isNull(staticValue)) {
+                    this.attachAttribute("src", staticValue);
+                    return;
+                }
+                const is_dark_mode = ftd.dark_mode.get();
+                const src = staticValue.get(is_dark_mode ? 'dark' : 'light');
+
+                this.attachAttribute("src", fastn_utils.getStaticValue(src));
+            }).addNodeProperty(this, null, inherited));
+            this.#mutables.push(ftd.dark_mode);
+        } else if (kind === fastn_dom.PropertyKind.Autoplay) {
+            if(staticValue) {
+                this.attachAttribute("autoplay", staticValue);
+            } else {
+                this.removeAttribute("autoplay");
+            }
+        } else if (kind === fastn_dom.PropertyKind.Muted) {
+            if(staticValue) {
+                this.attachAttribute("muted", staticValue);
+            } else {
+                this.removeAttribute("muted");
+            }
+        } else if (kind === fastn_dom.PropertyKind.Controls) {
+            if(staticValue) {
+                this.attachAttribute("controls", staticValue);
+            } else {
+                this.removeAttribute("controls");
+            }
+        } else if (kind === fastn_dom.PropertyKind.LoopVideo) {
+            if(staticValue) {
+                this.attachAttribute("loop", staticValue);
+            } else {
+                this.removeAttribute("loop");
+            }
+        } else if (kind === fastn_dom.PropertyKind.Poster) {
+            ftd.dark_mode.addClosure(fastn.closure(() => {
+                if (fastn_utils.isNull(staticValue)) {
+                    this.attachAttribute("poster", staticValue);
+                    return;
+                }
+                const is_dark_mode = ftd.dark_mode.get();
+                const posterSrc = staticValue.get(is_dark_mode ? 'dark' : 'light');
+
+                this.attachAttribute("poster", fastn_utils.getStaticValue(posterSrc));
+            }).addNodeProperty(this, null, inherited));
+            this.#mutables.push(ftd.dark_mode);
         } else if (kind === fastn_dom.PropertyKind.Fit) {
             this.attachCss("object-fit", staticValue);
         } else if (kind === fastn_dom.PropertyKind.YoutubeSrc) {
@@ -2205,6 +2312,7 @@ class Node2 {
             if (!ssr) {
                 let escapedHtmlValue = fastn_utils.escapeHtmlInMarkdown(staticValue);
                 staticValue = fastn_utils.markdown_inline(escapedHtmlValue);
+                staticValue = fastn_utils.process_post_markdown(this.#node, staticValue);
             }
             this.#node.innerHTML = staticValue;
         } else {
@@ -2457,8 +2565,13 @@ let fastn_utils = {
             css.push("ft_row");
         } else if (kind === fastn_dom.ElementKind.IFrame) {
             node = "iframe";
+            // To allow fullscreen support
+            // Reference: https://stackoverflow.com/questions/27723423/youtube-iframe-embed-full-screen
+            attributes["allowfullscreen"] = "";
         } else if (kind === fastn_dom.ElementKind.Image) {
             node = "img";
+        } else if (kind === fastn_dom.ElementKind.Video) {
+            node = "video";
         } else if (kind === fastn_dom.ElementKind.ContainerElement ||
             kind === fastn_dom.ElementKind.Text) {
             node = "div";
@@ -2478,9 +2591,9 @@ let fastn_utils = {
         } else if (kind === fastn_dom.ElementKind.CodeChild) {
             node = "code";
         } else if (kind[0] === fastn_dom.ElementKind.WebComponent()[0]) {
-            let {webcomponent, arguments} = kind[1];
+            let [webcomponent, args] = kind[1];
             node = `${webcomponent}`;
-            fastn_dom.webComponent.push(arguments);
+            fastn_dom.webComponent.push(args);
             attributes[fastn_dom.webComponentArgument] = fastn_dom.webComponent.length - 1;
         }
         return [node, css, attributes];
@@ -2679,6 +2792,25 @@ let fastn_utils = {
         })();
         return `${fastn_utils.private.repeated_space(space_before)}${o}${fastn_utils.private.repeated_space(space_after)}`;
     },
+
+    process_post_markdown(node, body) {
+        if (!ssr) {
+            const divElement = document.createElement("div");
+            divElement.innerHTML = body;
+
+            const current_node = node;
+            const colorClasses = Array.from(current_node.classList).filter(className => className.startsWith('__c'));
+            const tableElements = Array.from(divElement.getElementsByTagName('table'));
+
+            tableElements.forEach(table => {
+                colorClasses.forEach(colorClass => {
+                    table.classList.add(colorClass);
+                });
+            });
+            body = divElement.innerHTML;
+        }
+        return body;
+    },
     isNull(a) {
         return a === null || a === undefined;
     },
@@ -2823,6 +2955,18 @@ let fastn_utils = {
 
     flattenArray(arr) {
         return fastn_utils.private.flattenArray([arr]);
+    },
+    toSnakeCase(value) {
+        return value.trim().split('').map((v, i) => {
+            const lowercased = v.toLowerCase();
+            if(v == " ") {
+              return "_";
+            }
+            if(v != lowercased && i > 0) {
+                return `_${lowercased}`
+            }
+            return lowercased;
+        }).join('');
     },
 
     escapeHtmlInCode(str) {
@@ -3347,6 +3491,44 @@ ftd.toggle_dark_mode = function () {
 };
 
 const len = ftd.len;
+
+ftd.local_storage = {
+    _get_key(key) {
+        if (key instanceof fastn.mutableClass) {
+            key = key.get();
+        }
+        const packageNamePrefix = __fastn_package_name__ ? `${__fastn_package_name__}_` : "";
+        const snakeCaseKey = fastn_utils.toSnakeCase(key);
+    
+        return `${packageNamePrefix}${snakeCaseKey}`;
+    },
+    set(key, value) {
+        key = this._get_key(key);
+        value = fastn_utils.getFlattenStaticValue(value);
+        localStorage.setItem(key, value && typeof value === 'object' ? JSON.stringify(value) : value);
+    },
+    get(key) {
+        key = this._get_key(key);
+        if(ssr && !hydrating) {
+            return;
+        }
+        const item = localStorage.getItem(key);
+        if(!item) {
+            return;
+        }
+        try {
+            const obj = JSON.parse(item);
+
+            return fastn_utils.staticToMutables(obj);
+        } catch {
+            return item;
+        }
+    },
+    delete(key) {
+        key = this._get_key(key);
+        localStorage.removeItem(key);
+    }
+}
 class MutableVariable {
     #value;
     constructor(value) {
@@ -3684,64 +3866,124 @@ ftd.post_init = function () {
 window.ftd = ftd;
 
 ftd.toggle = function (args) {
-  let __args__ = args;
-  let fastn_utils_val___args___a = fastn_utils.clone(!fastn_utils.getter(__args__.a));
-  if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
-    __args__.a = fastn_utils_val___args___a;
+  let __fastn_super_package_name__ = __fastn_package_name__;
+  __fastn_package_name__ = "fastn_community_github_io_sunset_business_card";
+  try {
+    let __args__ = args;
+    let fastn_utils_val___args___a = fastn_utils.clone(!fastn_utils.getter(__args__.a));
+    if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
+      __args__.a = fastn_utils_val___args___a;
+    }
+  } finally {
+    __fastn_package_name__ = __fastn_super_package_name__;
   }
 }
 ftd.increment = function (args) {
-  let __args__ = args;
-  let fastn_utils_val___args___a = fastn_utils.clone(fastn_utils.getter(__args__.a) + 1);
-  if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
-    __args__.a = fastn_utils_val___args___a;
+  let __fastn_super_package_name__ = __fastn_package_name__;
+  __fastn_package_name__ = "fastn_community_github_io_sunset_business_card";
+  try {
+    let __args__ = args;
+    let fastn_utils_val___args___a = fastn_utils.clone(fastn_utils.getter(__args__.a) + 1);
+    if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
+      __args__.a = fastn_utils_val___args___a;
+    }
+  } finally {
+    __fastn_package_name__ = __fastn_super_package_name__;
   }
 }
 ftd.increment_by = function (args) {
-  let __args__ = args;
-  let fastn_utils_val___args___a = fastn_utils.clone(fastn_utils.getter(__args__.a) + fastn_utils.getter(__args__.v));
-  if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
-    __args__.a = fastn_utils_val___args___a;
+  let __fastn_super_package_name__ = __fastn_package_name__;
+  __fastn_package_name__ = "fastn_community_github_io_sunset_business_card";
+  try {
+    let __args__ = args;
+    let fastn_utils_val___args___a = fastn_utils.clone(fastn_utils.getter(__args__.a) + fastn_utils.getter(__args__.v));
+    if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
+      __args__.a = fastn_utils_val___args___a;
+    }
+  } finally {
+    __fastn_package_name__ = __fastn_super_package_name__;
   }
 }
 ftd.enable_light_mode = function (args) {
-  let __args__ = args;
-  return (enable_light_mode());
+  let __fastn_super_package_name__ = __fastn_package_name__;
+  __fastn_package_name__ = "fastn_community_github_io_sunset_business_card";
+  try {
+    let __args__ = args;
+    return (enable_light_mode());
+  } finally {
+    __fastn_package_name__ = __fastn_super_package_name__;
+  }
 }
 ftd.enable_dark_mode = function (args) {
-  let __args__ = args;
-  return (enable_dark_mode());
+  let __fastn_super_package_name__ = __fastn_package_name__;
+  __fastn_package_name__ = "fastn_community_github_io_sunset_business_card";
+  try {
+    let __args__ = args;
+    return (enable_dark_mode());
+  } finally {
+    __fastn_package_name__ = __fastn_super_package_name__;
+  }
 }
 ftd.enable_system_mode = function (args) {
-  let __args__ = args;
-  return (enable_system_mode());
+  let __fastn_super_package_name__ = __fastn_package_name__;
+  __fastn_package_name__ = "fastn_community_github_io_sunset_business_card";
+  try {
+    let __args__ = args;
+    return (enable_system_mode());
+  } finally {
+    __fastn_package_name__ = __fastn_super_package_name__;
+  }
 }
 ftd.set_bool = function (args) {
-  let __args__ = args;
-  let fastn_utils_val___args___a = fastn_utils.clone(__args__.v);
-  if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
-    __args__.a = fastn_utils_val___args___a;
+  let __fastn_super_package_name__ = __fastn_package_name__;
+  __fastn_package_name__ = "fastn_community_github_io_sunset_business_card";
+  try {
+    let __args__ = args;
+    let fastn_utils_val___args___a = fastn_utils.clone(__args__.v);
+    if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
+      __args__.a = fastn_utils_val___args___a;
+    }
+  } finally {
+    __fastn_package_name__ = __fastn_super_package_name__;
   }
 }
 ftd.set_boolean = function (args) {
-  let __args__ = args;
-  let fastn_utils_val___args___a = fastn_utils.clone(__args__.v);
-  if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
-    __args__.a = fastn_utils_val___args___a;
+  let __fastn_super_package_name__ = __fastn_package_name__;
+  __fastn_package_name__ = "fastn_community_github_io_sunset_business_card";
+  try {
+    let __args__ = args;
+    let fastn_utils_val___args___a = fastn_utils.clone(__args__.v);
+    if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
+      __args__.a = fastn_utils_val___args___a;
+    }
+  } finally {
+    __fastn_package_name__ = __fastn_super_package_name__;
   }
 }
 ftd.set_string = function (args) {
-  let __args__ = args;
-  let fastn_utils_val___args___a = fastn_utils.clone(__args__.v);
-  if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
-    __args__.a = fastn_utils_val___args___a;
+  let __fastn_super_package_name__ = __fastn_package_name__;
+  __fastn_package_name__ = "fastn_community_github_io_sunset_business_card";
+  try {
+    let __args__ = args;
+    let fastn_utils_val___args___a = fastn_utils.clone(__args__.v);
+    if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
+      __args__.a = fastn_utils_val___args___a;
+    }
+  } finally {
+    __fastn_package_name__ = __fastn_super_package_name__;
   }
 }
 ftd.set_integer = function (args) {
-  let __args__ = args;
-  let fastn_utils_val___args___a = fastn_utils.clone(__args__.v);
-  if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
-    __args__.a = fastn_utils_val___args___a;
+  let __fastn_super_package_name__ = __fastn_package_name__;
+  __fastn_package_name__ = "fastn_community_github_io_sunset_business_card";
+  try {
+    let __args__ = args;
+    let fastn_utils_val___args___a = fastn_utils.clone(__args__.v);
+    if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
+      __args__.a = fastn_utils_val___args___a;
+    }
+  } finally {
+    __fastn_package_name__ = __fastn_super_package_name__;
   }
 }
 ftd.dark_mode = fastn.mutable(false);

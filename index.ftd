@@ -1,6 +1,8 @@
 -- import: fastn-community.github.io/business-card/docs
 -- import: fastn-community.github.io/business-card as lib
 -- import:  fastn-community.github.io/sunset-business-card
+-- import: fastn-community.github.io/sunset-business-card/components/front
+-- import: fastn-community.github.io/sunset-business-card/components/back
 
 
 
@@ -40,39 +42,21 @@ optional string company-slogan:
 
 -- lib.display-card.front:
 
-;; =============================================================================
-;; ===============<IMPLEMENT THE FRONT SIDE OF BUSINESS CARD>===================
-;; =============================================================================
-
--- ftd.text: Implement the **FRONT** side of business card
-color: $inherited.colors.text
-background.solid: $inherited.colors.background.step-2
-width: fill-container
-height: fill-container
-text-align: center
-
-;; =============================================================================
-;; ================================== END ======================================
-;; =============================================================================
+-- front.front: $card.name
+title: $card.title
+contact-1: $card.contact-1
+contact-2: $card.contact-2
+email: $card.email
+website: $card.website
+address: $card.address
 
 -- end: lib.display-card.front
 
 -- lib.display-card.back:
 
-;; =============================================================================
-;; ===============<IMPLEMENT THE BACK SIDE OF BUSINESS CARD>===================
-;; =============================================================================
-
--- ftd.text: Implement the **BACK** side of business card
-color: $inherited.colors.text
-background.solid: $inherited.colors.background.step-2
-width: fill-container
-height: fill-container
-text-align: center
-
-;; =============================================================================
-;; ================================== END ======================================
-;; =============================================================================
+-- back.back: $card.company-name
+logo: $card.logo
+company-slogan: $card.company-slogan
 
 -- end: lib.display-card.back
 
